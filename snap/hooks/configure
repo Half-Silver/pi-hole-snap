@@ -26,5 +26,7 @@ apply_if_set blocking-enabled dns.blocking.active
 apply_if_set privacy-level misc.privacylevel
 apply_if_set web-password webserver.api.password
 
-snapctl restart "${SNAP_INSTANCE_NAME}.pihole-ftl" || true
-
+# Try to apply changes immediately, but never fail the hook on restart issues.
+if command -v systemctl >/dev/null 2>&1; then
+  systemctl restart "snap.${SNAP_INSTANCE_NAME}.pihole-ftl.service" >/dev/null 2>&1 || true
+fi

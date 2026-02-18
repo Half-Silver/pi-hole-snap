@@ -7,5 +7,33 @@ export PIHOLE_COMMAND="${SNAP}/bin/pihole"
 export PATH="${SNAP}/bin:${SNAP}/usr/bin:${PATH}"
 
 "${SNAP}/bin/pihole-bootstrap"
-exec "${SNAP}/usr/bin/pihole-FTL" -f
 
+port_53_conflict() {
+  ss -H -lpun 'sport = :53' 2>/dev/null | awk '
+    {
+      local_addr=$5
+      proc=$NF
+
+      # Allow systemd-resolved loopback listeners.
+      if (local_addr ~ /^127\.0\.0\.53(%[[:alnum:]_.-]+)?:53$/) next
+      if (local_addr ~ /^127\.0\.0\.54(%[[:alnum:]_.-]+)?:53$/) next
+      if (local_addr ~ /^\[::1\]:53$/) next
+
+      # Ignore stale/current Pi-hole listeners.
+      if (proc ~ /pihole-FTL/) next
+
+      found=1
+      exit
+    }
+    END { exit (found ? 0 : 1) }'
+}
+
+dns_port="$("${SNAP}/usr/bin/pihole-FTL" --config -q dns.port 2>/dev/null | tr -d '\r\n' || true)"
+[ -n "${dns_port}" ] || dns_port="53"
+
+if [ "${dns_port}" = "53" ] && port_53_conflict; then
+  echo "Detected port 53 conflict, switching Pi-hole DNS listener to 5353" >&2
+  "${SNAP}/usr/bin/pihole-FTL" --config dns.port 5353 >/dev/null 2>&1 || true
+fi
+
+exec "${SNAP}/usr/bin/pihole-FTL" -f

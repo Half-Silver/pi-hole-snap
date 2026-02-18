@@ -73,6 +73,8 @@ The Snap packaging is configured for development use (`grade: devel`, `confineme
 - `pi-hole-snap.pihole-ftl` as an auto-start daemon service
 - bundled Pi-hole web UI assets served by FTL
 - a `configure` hook for fleet management via `snap set` (Landscape compatible)
+- first-run default web UI ports `8080` (HTTP) and `8443` (HTTPS)
+- automatic DNS port fallback from `53` to `5353` when `53` is already occupied
 
 Example managed configuration updates:
 

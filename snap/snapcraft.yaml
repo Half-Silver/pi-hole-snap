@@ -1,6 +1,6 @@
 name: pi-hole-snap
 base: core24
-version: "0.1.1"
+version: "0.1.2"
 summary: Pi-hole packaged as a Snap with managed daemon service
 description: |
   Snap packaging for Pi-hole with an auto-starting pihole-FTL daemon and
