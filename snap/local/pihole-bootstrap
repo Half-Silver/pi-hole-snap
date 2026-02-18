@@ -10,7 +10,8 @@ run_dir="${SNAP_COMMON}/run"
 mkdir -p "${repo_dir}" "${config_dir}" "${logs_dir}" "${tmp_dir}" "${run_dir}"
 
 # Keep a writable repository mirror for scripts that read/write /etc/.pihole.
-cp -a --update=none "${SNAP}/etc/.pihole/." "${repo_dir}/"
+# Copy only missing files so repeated hook runs remain idempotent.
+cp -R -p -n "${SNAP}/etc/.pihole/." "${repo_dir}/"
 
 # Seed branch pin used by updater scripts when absent.
 if [ ! -f "${config_dir}/ftlbranch" ]; then
@@ -25,4 +26,3 @@ fi
 "${SNAP}/usr/bin/pihole-FTL" --config files.log.webserver "${logs_dir}/webserver.log" >/dev/null 2>&1 || true
 "${SNAP}/usr/bin/pihole-FTL" --config webserver.paths.webroot "/var/www/html" >/dev/null 2>&1 || true
 "${SNAP}/usr/bin/pihole-FTL" --config webserver.paths.webhome "/admin" >/dev/null 2>&1 || true
-
