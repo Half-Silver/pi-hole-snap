@@ -1,0 +1,54 @@
+name: pi-hole-snap
+base: core24
+version: "0.1.0"
+summary: Pi-hole core scripts packaged as a Snap
+description: |
+  Snap packaging for the Pi-hole core shell scripts in this repository.
+  This snap is intended for local development/testing and ships a launcher
+  that seeds writable state into SNAP_COMMON on first run.
+grade: devel
+confinement: devmode
+
+apps:
+  pihole:
+    command: bin/pihole-launch
+    plugs:
+      - home
+      - network
+      - network-bind
+
+layout:
+  /opt/pihole:
+    bind: $SNAP/opt/pihole
+  /etc/pihole:
+    bind: $SNAP_COMMON/etc-pihole
+  /etc/.pihole:
+    bind: $SNAP_COMMON/etc-dot-pihole
+  /var/log/pihole:
+    bind: $SNAP_COMMON/var-log-pihole
+
+parts:
+  pihole:
+    plugin: nil
+    source: .
+    override-build: |
+      set -eux
+
+      mkdir -p "$CRAFT_PART_INSTALL/bin"
+      mkdir -p "$CRAFT_PART_INSTALL/opt/pihole"
+      mkdir -p "$CRAFT_PART_INSTALL/etc/.pihole"
+
+      # Runtime launcher
+      install -m 0755 snap/local/pihole-launch "$CRAFT_PART_INSTALL/bin/pihole-launch"
+      ln -sf pihole-launch "$CRAFT_PART_INSTALL/bin/pihole"
+
+      # CLI runtime scripts expected at /opt/pihole
+      install -m 0755 pihole "$CRAFT_PART_INSTALL/opt/pihole/pihole"
+      install -m 0755 gravity.sh "$CRAFT_PART_INSTALL/opt/pihole/gravity.sh"
+      install -m 0755 "automated install/uninstall.sh" "$CRAFT_PART_INSTALL/opt/pihole/uninstall.sh"
+      cp -a advanced/Scripts/. "$CRAFT_PART_INSTALL/opt/pihole/"
+      cp -a advanced/Templates "$CRAFT_PART_INSTALL/opt/pihole/Templates"
+
+      # Seed repository mirror used by scripts that expect /etc/.pihole
+      cp -a . "$CRAFT_PART_INSTALL/etc/.pihole/"
+      rm -rf "$CRAFT_PART_INSTALL/etc/.pihole/.git"

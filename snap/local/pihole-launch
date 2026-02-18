@@ -1,0 +1,19 @@
+#!/usr/bin/env sh
+set -eu
+
+repo_dir="${SNAP_COMMON}/etc-dot-pihole"
+config_dir="${SNAP_COMMON}/etc-pihole"
+logs_dir="${SNAP_COMMON}/var-log-pihole"
+
+mkdir -p "${repo_dir}" "${config_dir}" "${logs_dir}"
+
+# Keep a writable repository mirror for scripts that read/write /etc/.pihole.
+# Use copy-if-missing to preserve any local modifications.
+cp -a -n "${SNAP}/etc/.pihole/." "${repo_dir}/"
+
+export PI_HOLE_SCRIPT_DIR=/opt/pihole
+export PI_HOLE_BIN_DIR="${SNAP}/bin"
+export PIHOLE_COMMAND="${SNAP}/bin/pihole"
+export PATH="${SNAP}/bin:${PATH}"
+
+exec "${SNAP}/opt/pihole/pihole" "$@"

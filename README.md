@@ -56,6 +56,19 @@ sudo bash basic-install.sh
 
 Please refer to the [Pi-hole docker repo](https://github.com/pi-hole/docker-pi-hole) to use the Official Docker Images.
 
+### Method 4: Build and install as a Snap (development)
+
+This repository now includes Snap metadata at `snap/snapcraft.yaml`.
+
+```bash
+sudo snap install snapcraft --classic
+snapcraft
+sudo snap install --dangerous --devmode ./pi-hole-snap_*.snap
+sudo snap run pi-hole-snap.pihole --help
+```
+
+The Snap packaging is configured for development use (`grade: devel`, `confinement: devmode`).
+
 ## [Post-install: Make your network take advantage of Pi-hole](https://docs.pi-hole.net/main/post-install/)
 
 Once the installer has been run, you will need to [configure your router to have **DHCP clients use Pi-hole as their DNS server**](https://discourse.pi-hole.net/t/how-do-i-configure-my-devices-to-use-pi-hole-as-their-dns-server/245). This router configuration will ensure that all devices connecting to your network will have content blocked without any further intervention.

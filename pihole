@@ -9,12 +9,12 @@
 # This file is copyright under the latest version of the EUPL.
 # Please see LICENSE file for your rights under this license.
 
-PI_HOLE_SCRIPT_DIR="/opt/pihole"
+PI_HOLE_SCRIPT_DIR="${PI_HOLE_SCRIPT_DIR:-/opt/pihole}"
 
 # PI_HOLE_BIN_DIR is not readonly here because in some functions (checkout),
 # they might get set again when the installer is sourced. This causes an
 # error due to modifying a readonly variable.
-PI_HOLE_BIN_DIR="/usr/local/bin"
+PI_HOLE_BIN_DIR="${PI_HOLE_BIN_DIR:-/usr/local/bin}"
 
 readonly colfile="${PI_HOLE_SCRIPT_DIR}/COL_TABLE"
 # shellcheck source=./advanced/Scripts/COL_TABLE

@@ -12,7 +12,7 @@
 
 export LC_ALL=C
 
-PI_HOLE_SCRIPT_DIR="/opt/pihole"
+PI_HOLE_SCRIPT_DIR="${PI_HOLE_SCRIPT_DIR:-/opt/pihole}"
 # Source utils.sh for GetFTLConfigValue
 utilsfile="${PI_HOLE_SCRIPT_DIR}/utils.sh"
 # shellcheck source=./advanced/Scripts/utils.sh
@@ -25,7 +25,7 @@ coltable="${PI_HOLE_SCRIPT_DIR}/COL_TABLE"
 . "/etc/.pihole/advanced/Scripts/database_migration/gravity-db.sh"
 
 basename="pihole"
-PIHOLE_COMMAND="/usr/local/bin/${basename}"
+PIHOLE_COMMAND="${PIHOLE_COMMAND:-/usr/local/bin/${basename}}"
 
 piholeDir="/etc/${basename}"
 
