@@ -1,16 +1,11 @@
 #!/usr/bin/env sh
 set -eu
 
-if [ ! -w "${SNAP_COMMON}" ]; then
-  echo "This command needs elevated privileges (use sudo)." >&2
-  exit 1
-fi
-
 export PI_HOLE_SCRIPT_DIR=/opt/pihole
 export PI_HOLE_BIN_DIR="${SNAP}/bin"
 export PIHOLE_COMMAND="${SNAP}/bin/pihole"
 export PATH="${SNAP}/bin:${SNAP}/usr/bin:${PATH}"
 
 "${SNAP}/bin/pihole-bootstrap"
+exec "${SNAP}/usr/bin/pihole-FTL" -f
 
-exec "${SNAP}/opt/pihole/pihole" "$@"

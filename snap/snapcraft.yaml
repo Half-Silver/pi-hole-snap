@@ -1,19 +1,31 @@
 name: pi-hole-snap
 base: core24
 version: "0.1.0"
-summary: Pi-hole core scripts packaged as a Snap
+summary: Pi-hole packaged as a Snap with managed daemon service
 description: |
-  Snap packaging for the Pi-hole core shell scripts in this repository.
-  This snap is intended for local development/testing and ships a launcher
-  that seeds writable state into SNAP_COMMON on first run.
+  Snap packaging for Pi-hole with an auto-starting pihole-FTL daemon and
+  bundled web interface assets. This snap is intended for local
+  development/testing and supports runtime configuration via snap set.
 grade: devel
 confinement: devmode
 
 apps:
   pihole:
     command: bin/pihole-launch
+    environment:
+      PATH: $SNAP/bin:$SNAP/usr/bin:$PATH
     plugs:
       - home
+      - network
+      - network-bind
+  pihole-ftl:
+    command: bin/pihole-ftl-service
+    daemon: simple
+    restart-condition: always
+    install-mode: enable
+    environment:
+      PATH: $SNAP/bin:$SNAP/usr/bin:$PATH
+    plugs:
       - network
       - network-bind
 
@@ -26,6 +38,8 @@ layout:
     bind: $SNAP_COMMON/etc-dot-pihole
   /var/log/pihole:
     bind: $SNAP_COMMON/var-log-pihole
+  /var/www/html:
+    bind: $SNAP/var/www/html
 
 parts:
   pihole:
@@ -37,9 +51,12 @@ parts:
       mkdir -p "$CRAFT_PART_INSTALL/bin"
       mkdir -p "$CRAFT_PART_INSTALL/opt/pihole"
       mkdir -p "$CRAFT_PART_INSTALL/etc/.pihole"
+      mkdir -p "$CRAFT_PART_INSTALL/var/www/html"
 
-      # Runtime launcher
+      # Runtime launchers
       install -m 0755 snap/local/pihole-launch "$CRAFT_PART_INSTALL/bin/pihole-launch"
+      install -m 0755 snap/local/pihole-ftl-service "$CRAFT_PART_INSTALL/bin/pihole-ftl-service"
+      install -m 0755 snap/local/pihole-bootstrap "$CRAFT_PART_INSTALL/bin/pihole-bootstrap"
       ln -sf pihole-launch "$CRAFT_PART_INSTALL/bin/pihole"
 
       # CLI runtime scripts expected at /opt/pihole
@@ -52,3 +69,39 @@ parts:
       # Seed repository mirror used by scripts that expect /etc/.pihole
       cp -a . "$CRAFT_PART_INSTALL/etc/.pihole/"
       rm -rf "$CRAFT_PART_INSTALL/etc/.pihole/.git"
+  web:
+    plugin: nil
+    source: https://github.com/pi-hole/web.git
+    source-depth: 1
+    override-build: |
+      set -eux
+
+      mkdir -p "$CRAFT_PART_INSTALL/var/www/html/admin"
+      cp -a . "$CRAFT_PART_INSTALL/var/www/html/admin/"
+      rm -rf "$CRAFT_PART_INSTALL/var/www/html/admin/.git"
+  ftl:
+    plugin: nil
+    build-packages:
+      - ca-certificates
+      - curl
+    override-build: |
+      set -eux
+
+      case "${CRAFT_ARCH_BUILD_FOR}" in
+        amd64) ftl_binary="pihole-FTL-amd64" ;;
+        arm64) ftl_binary="pihole-FTL-arm64" ;;
+        armhf) ftl_binary="pihole-FTL-armv7" ;;
+        i386) ftl_binary="pihole-FTL-386" ;;
+        riscv64) ftl_binary="pihole-FTL-riscv64" ;;
+        *)
+          echo "Unsupported architecture: ${CRAFT_ARCH_BUILD_FOR}" >&2
+          exit 1
+          ;;
+      esac
+
+      url="https://github.com/pi-hole/FTL/releases/latest/download/${ftl_binary}"
+      curl --fail --location --silent --show-error "${url}" -o "${ftl_binary}"
+      curl --fail --location --silent --show-error "${url}.sha1" -o "${ftl_binary}.sha1"
+      sha1sum --check "${ftl_binary}.sha1"
+
+      install -D -m 0755 "${ftl_binary}" "$CRAFT_PART_INSTALL/usr/bin/pihole-FTL"

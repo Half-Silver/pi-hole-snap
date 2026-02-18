@@ -64,10 +64,27 @@ This repository now includes Snap metadata at `snap/snapcraft.yaml`.
 sudo snap install snapcraft --classic
 snapcraft
 sudo snap install --dangerous --devmode ./pi-hole-snap_*.snap
+sudo snap services pi-hole-snap
 sudo snap run pi-hole-snap.pihole --help
 ```
 
-The Snap packaging is configured for development use (`grade: devel`, `confinement: devmode`).
+The Snap packaging is configured for development use (`grade: devel`, `confinement: devmode`) and includes:
+
+- `pi-hole-snap.pihole-ftl` as an auto-start daemon service
+- bundled Pi-hole web UI assets served by FTL
+- a `configure` hook for fleet management via `snap set` (Landscape compatible)
+
+Example managed configuration updates:
+
+```bash
+sudo snap set pi-hole-snap web-port="8080o,8443os"
+sudo snap set pi-hole-snap dns-upstreams='["1.1.1.1","8.8.8.8"]'
+sudo snap set pi-hole-snap blocking-enabled="true"
+sudo snap set pi-hole-snap privacy-level="0"
+sudo snap set pi-hole-snap web-password="changeme"
+```
+
+Then access the web UI at `http://<host-ip>:8080/admin/` (or your configured port).
 
 ## [Post-install: Make your network take advantage of Pi-hole](https://docs.pi-hole.net/main/post-install/)
 

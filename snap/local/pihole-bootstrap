@@ -1,0 +1,28 @@
+#!/usr/bin/env sh
+set -eu
+
+repo_dir="${SNAP_COMMON}/etc-dot-pihole"
+config_dir="${SNAP_COMMON}/etc-pihole"
+logs_dir="${SNAP_COMMON}/var-log-pihole"
+tmp_dir="${SNAP_COMMON}/tmp"
+run_dir="${SNAP_COMMON}/run"
+
+mkdir -p "${repo_dir}" "${config_dir}" "${logs_dir}" "${tmp_dir}" "${run_dir}"
+
+# Keep a writable repository mirror for scripts that read/write /etc/.pihole.
+cp -a --update=none "${SNAP}/etc/.pihole/." "${repo_dir}/"
+
+# Seed branch pin used by updater scripts when absent.
+if [ ! -f "${config_dir}/ftlbranch" ]; then
+  printf "master\n" > "${config_dir}/ftlbranch"
+fi
+
+# Force Snap-safe locations and known web paths.
+"${SNAP}/usr/bin/pihole-FTL" --config files.pid "${run_dir}/pihole-FTL.pid" >/dev/null 2>&1 || true
+"${SNAP}/usr/bin/pihole-FTL" --config files.gravity_tmp "${tmp_dir}" >/dev/null 2>&1 || true
+"${SNAP}/usr/bin/pihole-FTL" --config files.log.ftl "${logs_dir}/FTL.log" >/dev/null 2>&1 || true
+"${SNAP}/usr/bin/pihole-FTL" --config files.log.dnsmasq "${logs_dir}/pihole.log" >/dev/null 2>&1 || true
+"${SNAP}/usr/bin/pihole-FTL" --config files.log.webserver "${logs_dir}/webserver.log" >/dev/null 2>&1 || true
+"${SNAP}/usr/bin/pihole-FTL" --config webserver.paths.webroot "/var/www/html" >/dev/null 2>&1 || true
+"${SNAP}/usr/bin/pihole-FTL" --config webserver.paths.webhome "/admin" >/dev/null 2>&1 || true
+

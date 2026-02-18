@@ -1,0 +1,30 @@
+#!/usr/bin/env sh
+set -eu
+
+apply_if_set() {
+  snap_key="$1"
+  ftl_key="$2"
+  value="$(snapctl get "${snap_key}" || true)"
+  if [ -n "${value}" ]; then
+    "${SNAP}/usr/bin/pihole-FTL" --config "${ftl_key}" "${value}" >/dev/null
+  fi
+}
+
+"${SNAP}/bin/pihole-bootstrap"
+
+# Landscape (or any snap client) can set these keys:
+# snap set pi-hole-snap web-port="8080o,8443os"
+# snap set pi-hole-snap dns-upstreams='["1.1.1.1","8.8.8.8"]'
+# snap set pi-hole-snap dns-listening-mode="ALL"
+# snap set pi-hole-snap blocking-enabled="true"
+# snap set pi-hole-snap privacy-level="0"
+# snap set pi-hole-snap web-password="secret"
+apply_if_set web-port webserver.port
+apply_if_set dns-upstreams dns.upstreams
+apply_if_set dns-listening-mode dns.listeningMode
+apply_if_set blocking-enabled dns.blocking.active
+apply_if_set privacy-level misc.privacylevel
+apply_if_set web-password webserver.api.password
+
+snapctl restart "${SNAP_INSTANCE_NAME}.pihole-ftl" || true
+
